@@ -239,6 +239,19 @@
 const AVATAR_POOL = ['🦊', '🐼', '🐰', '🐯', '🦁', '🐸', '🐨', '🐙', '🤖', '👽'];
 const NAME_POOL   = ['智能狐', '沉思猫', '炸弹熊', '闪电兔', '机智虎', '呱呱蛙', '卡皮猫', '章鱼哥', '机器人', '火星人'];
 
+// 斗地主牌面大小 (大王>小王>2>A>K>Q>J>10>9>...>3)
+const CARD_RANK = { '大':17, '小':16, '2':15, 'A':14, 'K':13, 'Q':12, 'J':11,
+                    '10':10, '9':9, '8':8, '7':7, '6':6, '5':5, '4':4, '3':3 };
+function sortCards(cards) {
+  // 大→小 desc, 同点数按花色次序 (大王/小王/♠/♥/♦/♣)
+  const SUIT_ORDER = { joker: 0, spade: 1, heart: 2, diamond: 3, club: 4 };
+  return [...cards].sort((a, b) => {
+    const ra = CARD_RANK[a.rank] || 0, rb = CARD_RANK[b.rank] || 0;
+    if (rb !== ra) return rb - ra;
+    return SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
+  });
+}
+
 // SVG 卡牌生成器
 function makeCardSvg(card, height) {
   const w = height * 0.72;
@@ -284,7 +297,7 @@ function app() {
       { id: 3, status: 'idle',    canJoin: true, seats: [null, null, null] },
       { id: 4, status: 'waiting', canJoin: true, seats: [{name:'张三', avatar:'👤', isHost:true, isAI:false}, {name:'李四', avatar:'👤', isHost:false, isAI:false}, null] },
     ],
-    myCards: [
+    myCards: sortCards([
       {rank:'3', suit:'heart', selected:false},  {rank:'4', suit:'spade', selected:false},
       {rank:'5', suit:'diamond', selected:false},{rank:'6', suit:'club', selected:false},
       {rank:'7', suit:'heart', selected:false},  {rank:'8', suit:'spade', selected:false},
@@ -294,7 +307,7 @@ function app() {
       {rank:'2', suit:'heart', selected:false},  {rank:'小', suit:'joker', selected:false},
       {rank:'大', suit:'joker', selected:false}, {rank:'3', suit:'spade', selected:false},
       {rank:'5', suit:'heart', selected:false},
-    ],
+    ]),
     statusLabel(s) { return {idle:'空闲', waiting:'等待中', playing:'游戏中'}[s]; },
     statusStyle(s) {
       return {
