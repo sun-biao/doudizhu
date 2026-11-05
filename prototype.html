@@ -155,65 +155,86 @@
   </div>
 </div>
 
-<!-- ============ 页面 4: 游戏中 ============ -->
-<div x-show="page==='table_playing'" class="min-h-screen bg-gradient-to-br from-green-700 via-emerald-700 to-teal-700 text-white">
-  <div class="bg-black/30 px-4 py-2 flex items-center justify-between">
-    <div class="text-sm font-bold">桌 3 · 游戏中 · 第 1 局</div>
-    <div class="text-xs flex items-center gap-2">
-      <button class="text-slate-200 hover:text-white">记牌器</button>
-      <span class="opacity-40">|</span>
-      <button @click="page='lobby'" class="text-slate-200 hover:text-rose-300">退出</button>
-    </div>
+<!-- ============ 页面 4: 游戏中 (QQ 斗地主布局) ============ -->
+<div x-show="page==='table_playing'" class="min-h-screen text-white flex flex-col" style="background: linear-gradient(135deg, #0f766e 0%, #047857 50%, #065f46 100%);">
+
+  <!-- 顶栏: 返回 + 桌号 + 设置 -->
+  <div class="flex items-center justify-between px-3 py-2 bg-black/30 text-xs">
+    <button @click="page='lobby'" class="text-slate-200 hover:text-white">← 退出</button>
+    <div class="text-slate-200 font-bold">桌 3 · 第 1 局</div>
+    <button class="text-slate-200 hover:text-white">设置</button>
   </div>
 
-  <div class="grid grid-cols-2 gap-4 p-4">
-    <!-- 左上对手 -->
-    <div class="text-center">
-      <div class="avatar bg-purple-200 mx-auto mb-1" style="color:#4c1d95">🦊</div>
-      <div class="text-xs font-bold">智能狐</div>
-      <div class="text-[10px] text-slate-200">平民 · 12 张</div>
-      <div class="flex justify-center mt-2">
-        <template x-for="i in 6" :key="i">
-          <span class="inline-block" style="margin:0 -6px" x-html="cardBack(28)"></span>
-        </template>
+  <!-- 中央桌面区 (金色圆形桌面) -->
+  <div class="flex-1 relative px-4 py-4">
+    <!-- 左对手 (地主) -->
+    <div class="absolute top-4 left-2 sm:left-8 text-center">
+      <div class="relative inline-block">
+        <div class="avatar avatar-lg border-4 border-amber-400 shadow-lg bg-pink-200" style="color:#831843">🐼</div>
+        <!-- 地主徽章 -->
+        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow border border-yellow-600">地</div>
+      </div>
+      <div class="text-xs font-bold mt-1">沉思猫</div>
+      <div class="text-[10px] text-yellow-200 font-bold">1250 分</div>
+      <div class="bg-black/40 inline-block px-2 py-0.5 rounded-full mt-1">
+        <span class="text-[10px] text-yellow-300 font-bold">🂠 17</span>
       </div>
     </div>
-    <!-- 右上对手 (地主) -->
-    <div class="text-center">
-      <div class="avatar bg-pink-200 mx-auto mb-1" style="color:#831843">🐼</div>
-      <div class="text-xs font-bold">沉思猫 👑</div>
-      <div class="text-[10px] text-yellow-300 font-bold">地主 · 17 张</div>
-      <div class="flex justify-center mt-2">
-        <template x-for="i in 8" :key="i">
-          <span class="inline-block" style="margin:0 -6px" x-html="cardBack(28)"></span>
-        </template>
-      </div>
-    </div>
-  </div>
 
-  <!-- 中央出牌区 -->
-  <div class="my-6 flex flex-col items-center">
-    <div class="bg-black/20 px-4 py-3 rounded-lg">
-      <div class="text-xs text-slate-300 mb-1 text-center">沉思猫 出:</div>
-      <div class="flex">
-        <span x-html="cardSvg({rank:'3', suit:'heart'}, 50)"></span>
-        <span x-html="cardSvg({rank:'3', suit:'spade'}, 50)"></span>
+    <!-- 右对手 (平民) -->
+    <div class="absolute top-4 right-2 sm:right-8 text-center">
+      <div class="relative inline-block">
+        <div class="avatar avatar-lg border-4 border-slate-300 shadow-lg bg-purple-200" style="color:#4c1d95">🦊</div>
       </div>
-      <div class="text-[10px] text-slate-300 mt-1 text-center">一对 3</div>
+      <div class="text-xs font-bold mt-1">智能狐</div>
+      <div class="text-[10px] text-slate-300 font-bold">980 分</div>
+      <div class="bg-black/40 inline-block px-2 py-0.5 rounded-full mt-1">
+        <span class="text-[10px] text-slate-200 font-bold">🂠 12</span>
+      </div>
     </div>
-  </div>
 
-  <!-- 底部自己 -->
-  <div class="bg-black/40 backdrop-blur px-3 py-3 border-t-2 border-amber-400">
-    <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <div class="avatar bg-blue-200" style="color:#1e3a8a">👤</div>
-        <div>
-          <div class="text-sm font-bold">龙傲天 (你)</div>
-          <div class="text-[10px] text-slate-200">平民 · <span class="font-bold text-yellow-300">17 张</span></div>
+    <!-- 中央圆形金色桌面 + 出牌区 -->
+    <div class="mx-auto my-16 sm:my-20 flex flex-col items-center">
+      <div class="rounded-full shadow-2xl flex flex-col items-center justify-center"
+           style="width:min(80vw,400px); height:min(40vw,200px); background: radial-gradient(circle, #d4a048 0%, #a16a1c 100%); border: 4px solid #78350f;">
+        <!-- 底牌 (3 张, 游戏开始时显示) -->
+        <div class="flex gap-0.5 mb-2">
+          <span x-html="cardSvg({rank:'7', suit:'spade'}, 36)"></span>
+          <span x-html="cardSvg({rank:'J', suit:'heart'}, 36)"></span>
+          <span x-html="cardSvg({rank:'大', suit:'joker'}, 36)"></span>
+        </div>
+        <!-- 上家出的牌 -->
+        <div class="bg-black/30 px-3 py-2 rounded mb-1">
+          <div class="text-[10px] text-slate-200 text-center mb-1">沉思猫 (地主) 出:</div>
+          <div class="flex">
+            <span x-html="cardSvg({rank:'3', suit:'heart'}, 44)"></span>
+            <span x-html="cardSvg({rank:'3', suit:'spade'}, 44)"></span>
+          </div>
         </div>
       </div>
-      <div class="text-xs text-slate-200">轮到你出牌</div>
+    </div>
+
+    <!-- 轮到出牌 提示 -->
+    <div class="text-center mb-2">
+      <span class="bg-amber-500/80 text-white text-xs font-bold px-3 py-1 rounded-full shadow">轮到你出牌</span>
+    </div>
+  </div>
+
+  <!-- 底部: 自己头像(小) + 手牌 + 大按钮 -->
+  <div class="bg-black/50 backdrop-blur border-t-2 border-amber-400 px-3 py-2">
+    <!-- 顶部一行: 头像 + 名字 + 分数 + 剩余 + 角色 -->
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <div class="avatar bg-blue-200" style="width:40px;height:40px;color:#1e3a8a">👤</div>
+        <div>
+          <div class="text-sm font-bold">龙傲天 (你)</div>
+          <div class="text-[10px] text-slate-200 flex items-center gap-2">
+            <span class="bg-emerald-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold">平民</span>
+            <span class="text-yellow-200 font-bold">1480 分</span>
+            <span>剩 <span class="text-yellow-300 font-bold">17</span> 张</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 手牌 SVG -->
