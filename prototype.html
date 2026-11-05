@@ -219,12 +219,12 @@
     <!-- 手牌 SVG -->
     <div class="card-hand overflow-x-auto py-4">
       <template x-for="(c, idx) in myCards" :key="idx">
-        <span class="card-svg" :class="c.selected ? 'selected' : ''" @click="c.selected = !c.selected" x-html="cardSvg(c, 52)"></span>
+        <span class="card-svg" :class="c.selected ? 'selected' : ''" @click="onCardClick(c)" x-html="cardSvg(c, 52)"></span>
       </template>
     </div>
 
     <div class="flex gap-2 mt-3">
-      <button class="flex-1 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded text-sm">要不起</button>
+      <button @click="clearSelection()" class="flex-1 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded text-sm">清空</button>
       <button class="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded text-sm">提示</button>
       <button class="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded text-sm">
         出牌 (<span x-text="myCards.filter(c=>c.selected).length"></span>)
@@ -308,6 +308,84 @@ function app() {
       {rank:'大', suit:'joker', selected:false}, {rank:'3', suit:'spade', selected:false},
       {rank:'5', suit:'heart', selected:false},
     ]),
+    // 上家出的牌 (mock: 对 3). 未来从后端 state 来
+    lastPlayed: { type: 'pair', rank: '3', count: 2 },
+
+    // 智能辅助出牌: 点一张自动补齐同牌型
+    onCardClick(c) {
+      // 若该牌已选中 → 取消选中 (单独取消这一张)
+      if (c.selected) { c.selected = false; return; }
+
+      // 未选中 → 选中 + 根据 lastPlayed 自动补齐
+      c.selected = true;
+      const lp = this.lastPlayed;
+      if (!lp || !lp.type) return;   // 无上家出牌, 自由出
+
+      // 对子: 自动补 1 张同点数
+      if (lp.type === 'pair') {
+        const other = this.myCards.find(x => x !== c && x.rank === c.rank && !x.selected);
+        if (other) other.selected = true;
+      }
+      // 三张: 自动补 2 张同点数
+      else if (lp.type === 'triple') {
+        const others = this.myCards.filter(x => x !== c && x.rank === c.rank && !x.selected).slice(0, 2);
+        others.forEach(o => o.selected = true);
+      }
+      // 三带一: 自动补 2 张三 + 最小单张
+      else if (lp.type === 'triple_with_one') {
+        const same = this.myCards.filter(x => x !== c && x.rank === c.rank && !x.selected).slice(0, 2);
+        if (same.length === 2) {
+          same.forEach(o => o.selected = true);
+          // 补最小单张 (不和三张同点数)
+          const kicker = [...this.myCards].reverse().find(x => !x.selected && x.rank !== c.rank);
+          if (kicker) kicker.selected = true;
+        }
+      }
+      // 三带二: 自动补 2 张三 + 最小对子
+      else if (lp.type === 'triple_with_pair') {
+        const same = this.myCards.filter(x => x !== c && x.rank === c.rank && !x.selected).slice(0, 2);
+        if (same.length === 2) {
+          same.forEach(o => o.selected = true);
+          // 找最小对子 (非三张的点数)
+          const counts = {};
+          this.myCards.forEach(x => { if (!x.selected) counts[x.rank] = (counts[x.rank]||0) + 1; });
+          const pairRank = Object.keys(counts).filter(r => counts[r] >= 2 && r !== c.rank)
+                                               .sort((a,b) => (CARD_RANK[a]||0) - (CARD_RANK[b]||0))[0];
+          if (pairRank) {
+            const pair = this.myCards.filter(x => !x.selected && x.rank === pairRank).slice(0, 2);
+            pair.forEach(o => o.selected = true);
+          }
+        }
+      }
+      // 炸弹 (四张): 自动补 3 张同点数
+      else if (lp.type === 'bomb') {
+        const others = this.myCards.filter(x => x !== c && x.rank === c.rank && !x.selected).slice(0, 3);
+        others.forEach(o => o.selected = true);
+      }
+      // 顺子 (5+ 连续单张): 简化版 — 若点的牌能作为最小/最大起点, 自动补齐同长度连续
+      else if (lp.type === 'straight') {
+        const needLen = lp.count || 5;
+        // 以 c 为最小起点, 向上找 needLen 张连续 (2/joker 不能入顺)
+        const ranksAvail = [...new Set(this.myCards.filter(x => !x.selected || x === c)
+          .map(x => x.rank).filter(r => CARD_RANK[r] < 15))];   // 排除 2/joker
+        const vals = ranksAvail.map(r => CARD_RANK[r]).sort((a,b) => a-b);
+        const startVal = CARD_RANK[c.rank];
+        // 检查从 startVal 开始能连续 needLen 张
+        const seq = [];
+        for (let v = startVal; v < startVal + needLen; v++) {
+          if (!vals.includes(v)) break;
+          seq.push(v);
+        }
+        if (seq.length === needLen) {
+          seq.forEach(v => {
+            const card = this.myCards.find(x => !x.selected && CARD_RANK[x.rank] === v);
+            if (card) card.selected = true;
+          });
+        }
+      }
+    },
+    clearSelection() { this.myCards.forEach(c => c.selected = false); },
+
     statusLabel(s) { return {idle:'空闲', waiting:'等待中', playing:'游戏中'}[s]; },
     statusStyle(s) {
       return {
