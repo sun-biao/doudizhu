@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>斗地主 · 原型</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+  .card-svg { display: inline-block; vertical-align: middle; transition: transform 0.15s; cursor: pointer; user-select: none; margin: 0 -8px; }
+  .card-svg:hover { transform: translateY(-4px); z-index: 10; position: relative; }
+  .card-svg.selected { transform: translateY(-16px); z-index: 10; position: relative; filter: drop-shadow(0 4px 8px rgba(59,130,246,0.6)); }
+  .card-hand { display: flex; justify-content: center; padding-left: 12px; padding-right: 12px; flex-wrap: nowrap; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; }
+  .avatar-sm { width: 32px; height: 32px; font-size: 1rem; }
+  .avatar-lg { width: 64px; height: 64px; font-size: 2rem; }
+  .table-card { transition: all 0.2s; }
+  .table-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen" x-data="app()">
+
+<!-- 原型调试栏 -->
+<div class="bg-amber-50 border-b border-amber-200 px-3 py-1 text-xs text-amber-900 flex gap-3 items-center flex-wrap">
+  <span class="font-bold">🔧 原型:</span>
+  <button @click="page='login'" class="underline">登录</button>
+  <button @click="page='lobby'" class="underline">大厅</button>
+  <button @click="page='table_waiting'" class="underline">桌内-等待</button>
+  <button @click="page='table_playing'" class="underline">桌内-游戏</button>
+</div>
+
+<!-- SVG 卡牌模板 (定义一次, 多处 use) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+  <defs>
+    <!-- 花色符号 -->
+    <symbol id="suit-spade" viewBox="0 0 10 10"><text x="5" y="8.5" text-anchor="middle" font-size="10" fill="currentColor">♠</text></symbol>
+    <symbol id="suit-heart" viewBox="0 0 10 10"><text x="5" y="8.5" text-anchor="middle" font-size="10" fill="currentColor">♥</text></symbol>
+    <symbol id="suit-diamond" viewBox="0 0 10 10"><text x="5" y="8.5" text-anchor="middle" font-size="10" fill="currentColor">♦</text></symbol>
+    <symbol id="suit-club" viewBox="0 0 10 10"><text x="5" y="8.5" text-anchor="middle" font-size="10" fill="currentColor">♣</text></symbol>
+  </defs>
+</svg>
+
+<!-- ============ 页面 1: 登录 ============ -->
+<div x-show="page==='login'" class="flex items-center justify-center min-h-[80vh] px-4">
+  <div class="bg-white shadow-xl border border-slate-200 w-full max-w-sm p-6">
+    <div class="text-center mb-6">
+      <div class="text-4xl mb-2">🀄</div>
+      <div class="text-2xl font-bold text-slate-800">斗 地 主</div>
+      <div class="text-xs text-slate-500 mt-1">三人对战 · 智能 AI</div>
+    </div>
+    <div class="space-y-3">
+      <input type="text" placeholder="用户名" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 text-sm"/>
+      <input type="password" placeholder="密码" class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:border-indigo-500 text-sm"/>
+      <div class="flex gap-2 pt-2">
+        <button @click="page='lobby'" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded text-sm">登 录</button>
+        <button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded text-sm">注 册</button>
+      </div>
+      <div class="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-100">新用户注册需管理员审核</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 页面 2: 大厅 ============ -->
+<div x-show="page==='lobby'" class="min-h-screen">
+  <div class="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between sticky top-0 z-10">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">🀄</span>
+      <span class="font-bold text-slate-800">大厅</span>
+    </div>
+    <div class="flex items-center gap-3 text-sm">
+      <div class="avatar avatar-sm bg-emerald-100">👤</div>
+      <span class="hidden sm:inline text-slate-700 font-medium">龙傲天</span>
+      <span class="text-xs text-slate-500">在线 7 人</span>
+      <button class="text-xs text-indigo-600 hover:underline">退出</button>
+    </div>
+  </div>
+
+  <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
+    <template x-for="t in tables" :key="t.id">
+      <div class="bg-white border border-slate-200 p-4 table-card" :class="t.canJoin ? 'cursor-pointer' : 'opacity-70'" @click="enterTable(t)">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-bold text-slate-800">桌 <span x-text="t.id"></span></div>
+          <span class="text-xs px-2 py-0.5 rounded" :class="statusStyle(t.status)" x-text="statusLabel(t.status)"></span>
+        </div>
+        <div class="flex items-center justify-around py-2">
+          <template x-for="(s, idx) in t.seats" :key="idx">
+            <div class="text-center">
+              <div class="avatar mx-auto" :class="s ? (s.isAI ? 'bg-purple-100' : 'bg-blue-100') : 'bg-slate-100'">
+                <span x-text="s ? s.avatar : '🪑'"></span>
+              </div>
+              <div class="text-[10px] mt-1 text-slate-600 truncate max-w-[60px]" x-text="s ? s.name : '空'"></div>
+              <div class="text-[9px] text-amber-600 font-bold" x-show="s && s.isHost">👑 主人</div>
+            </div>
+          </template>
+        </div>
+        <button class="w-full mt-2 px-3 py-1.5 text-sm font-bold rounded transition-colors"
+                :class="t.canJoin ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed'">
+          <span x-text="t.canJoin ? (t.seats.filter(s=>s).length === 0 ? '入 座 (成为主人)' : '加 入') : (t.status==='playing' ? '游戏中' : '已 满')"></span>
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <div class="text-center text-xs text-slate-500 pb-4">固定 4 桌 · 每桌 3 人 · 不满自动 AI 填充</div>
+</div>
+
+<!-- ============ 页面 3: 桌内等待 ============ -->
+<div x-show="page==='table_waiting'" class="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
+  <div class="bg-white/80 backdrop-blur border-b border-slate-200 px-4 py-2 flex items-center justify-between">
+    <div class="text-sm font-bold text-slate-800">桌 3 · 等待开始</div>
+    <button @click="page='lobby'" class="text-xs text-slate-600 hover:text-rose-600">← 退出桌子</button>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="grid grid-cols-2 gap-4 mb-12">
+      <div class="bg-white/60 border-2 border-dashed border-slate-300 p-6 text-center rounded">
+        <div class="avatar bg-slate-100 mx-auto mb-2">🪑</div>
+        <div class="text-sm text-slate-500">等待玩家...</div>
+        <div class="text-[10px] text-slate-400 mt-1">开始后 AI 填充</div>
+      </div>
+      <div class="bg-white/60 border-2 border-dashed border-slate-300 p-6 text-center rounded">
+        <div class="avatar bg-slate-100 mx-auto mb-2">🪑</div>
+        <div class="text-sm text-slate-500">等待玩家...</div>
+        <div class="text-[10px] text-slate-400 mt-1">开始后 AI 填充</div>
+      </div>
+    </div>
+
+    <div class="text-center text-slate-400 text-4xl mb-12">🀫</div>
+
+    <div class="bg-white shadow-md border border-amber-300 p-4 text-center rounded mb-6">
+      <div class="avatar avatar-lg bg-blue-100 mx-auto mb-2">👤</div>
+      <div class="font-bold text-slate-800">龙傲天 (你)</div>
+      <div class="text-xs text-amber-600 font-bold mt-1">👑 主人</div>
+    </div>
+
+    <div class="bg-white shadow-md border border-slate-200 p-4 rounded">
+      <div class="text-sm font-bold text-slate-700 mb-3">AI 等级设置</div>
+      <div class="flex gap-2 mb-4">
+        <template x-for="level in ['新手', '中级', '高级']" :key="level">
+          <button @click="aiLevel = level" class="flex-1 px-3 py-2 text-sm font-bold rounded border-2 transition-all"
+                  :class="aiLevel === level ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-300 hover:border-indigo-400'">
+            <span x-text="level"></span>
+          </button>
+        </template>
+      </div>
+
+      <div class="text-xs text-slate-500 mb-3 text-center">
+        当前 <span class="font-bold text-slate-700">1 人就位</span>, 缺 2 人 → 开始后自动填充 2 名 <span x-text="aiLevel"></span> AI
+      </div>
+
+      <button @click="page='table_playing'" class="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded text-lg shadow-md">
+        🎮  开 始 游 戏
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 页面 4: 游戏中 ============ -->
+<div x-show="page==='table_playing'" class="min-h-screen bg-gradient-to-br from-green-700 via-emerald-700 to-teal-700 text-white">
+  <div class="bg-black/30 px-4 py-2 flex items-center justify-between">
+    <div class="text-sm font-bold">桌 3 · 游戏中 · 第 1 局</div>
+    <div class="text-xs flex items-center gap-2">
+      <button class="text-slate-200 hover:text-white">记牌器</button>
+      <span class="opacity-40">|</span>
+      <button @click="page='lobby'" class="text-slate-200 hover:text-rose-300">退出</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 p-4">
+    <!-- 左上对手 -->
+    <div class="text-center">
+      <div class="avatar bg-purple-200 mx-auto mb-1" style="color:#4c1d95">🦊</div>
+      <div class="text-xs font-bold">智能狐</div>
+      <div class="text-[10px] text-slate-200">平民 · 12 张</div>
+      <div class="flex justify-center mt-2">
+        <template x-for="i in 6" :key="i">
+          <span class="inline-block" style="margin:0 -6px" x-html="cardBack(28)"></span>
+        </template>
+      </div>
+    </div>
+    <!-- 右上对手 (地主) -->
+    <div class="text-center">
+      <div class="avatar bg-pink-200 mx-auto mb-1" style="color:#831843">🐼</div>
+      <div class="text-xs font-bold">沉思猫 👑</div>
+      <div class="text-[10px] text-yellow-300 font-bold">地主 · 17 张</div>
+      <div class="flex justify-center mt-2">
+        <template x-for="i in 8" :key="i">
+          <span class="inline-block" style="margin:0 -6px" x-html="cardBack(28)"></span>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中央出牌区 -->
+  <div class="my-6 flex flex-col items-center">
+    <div class="bg-black/20 px-4 py-3 rounded-lg">
+      <div class="text-xs text-slate-300 mb-1 text-center">沉思猫 出:</div>
+      <div class="flex">
+        <span x-html="cardSvg({rank:'3', suit:'heart'}, 50)"></span>
+        <span x-html="cardSvg({rank:'3', suit:'spade'}, 50)"></span>
+      </div>
+      <div class="text-[10px] text-slate-300 mt-1 text-center">一对 3</div>
+    </div>
+  </div>
+
+  <!-- 底部自己 -->
+  <div class="bg-black/40 backdrop-blur px-3 py-3 border-t-2 border-amber-400">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <div class="avatar bg-blue-200" style="color:#1e3a8a">👤</div>
+        <div>
+          <div class="text-sm font-bold">龙傲天 (你)</div>
+          <div class="text-[10px] text-slate-200">平民 · <span class="font-bold text-yellow-300">17 张</span></div>
+        </div>
+      </div>
+      <div class="text-xs text-slate-200">轮到你出牌</div>
+    </div>
+
+    <!-- 手牌 SVG -->
+    <div class="card-hand overflow-x-auto py-4">
+      <template x-for="(c, idx) in myCards" :key="idx">
+        <span class="card-svg" :class="c.selected ? 'selected' : ''" @click="c.selected = !c.selected" x-html="cardSvg(c, 52)"></span>
+      </template>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+      <button class="flex-1 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded text-sm">要不起</button>
+      <button class="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded text-sm">提示</button>
+      <button class="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded text-sm">
+        出牌 (<span x-text="myCards.filter(c=>c.selected).length"></span>)
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// 头像预设池 (后期替换为 SVG 美化)
+const AVATAR_POOL = ['🦊', '🐼', '🐰', '🐯', '🦁', '🐸', '🐨', '🐙', '🤖', '👽'];
+const NAME_POOL   = ['智能狐', '沉思猫', '炸弹熊', '闪电兔', '机智虎', '呱呱蛙', '卡皮猫', '章鱼哥', '机器人', '火星人'];
+
+// SVG 卡牌生成器
+function makeCardSvg(card, height) {
+  const w = height * 0.72;
+  const h = height;
+  const isRed = card.suit === 'heart' || card.suit === 'diamond';
+  const isJoker = card.suit === 'joker';
+  const color = isRed ? '#dc2626' : (isJoker ? (card.rank==='大' ? '#dc2626' : '#1f2937') : '#1f2937');
+  const bg = '#ffffff';
+  const suitSym = {spade:'♠', heart:'♥', diamond:'♦', club:'♣', joker:''}[card.suit] || '';
+  const fontSize = Math.round(h * 0.28);
+  const bigFontSize = Math.round(h * 0.48);
+  if (isJoker) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+      <rect width="${w}" height="${h}" rx="4" ry="4" fill="${bg}" stroke="#475569" stroke-width="1"/>
+      <text x="${w/2}" y="${h/2+6}" text-anchor="middle" font-family="sans-serif" font-size="${fontSize}" font-weight="bold" fill="${color}">${card.rank==='大' ? '大王' : '小王'}</text>
+    </svg>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <rect width="${w}" height="${h}" rx="4" ry="4" fill="${bg}" stroke="#475569" stroke-width="1"/>
+    <text x="4" y="${fontSize+2}" font-family="sans-serif" font-size="${fontSize}" font-weight="bold" fill="${color}">${card.rank}</text>
+    <text x="4" y="${fontSize*2}" font-family="sans-serif" font-size="${Math.round(fontSize*0.9)}" fill="${color}">${suitSym}</text>
+    <text x="${w/2}" y="${h/2+bigFontSize/3}" text-anchor="middle" font-family="sans-serif" font-size="${bigFontSize}" fill="${color}" opacity="0.3">${suitSym}</text>
+  </svg>`;
+}
+function makeCardBack(height) {
+  const w = height * 0.72, h = height;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1e40af"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+    <rect width="${w}" height="${h}" rx="4" ry="4" fill="url(#bg)" stroke="#1e293b" stroke-width="1"/>
+    <text x="${w/2}" y="${h/2+8}" text-anchor="middle" font-size="16" fill="white" opacity="0.6">🀄</text>
+  </svg>`;
+}
+
+function app() {
+  return {
+    page: 'lobby',
+    aiLevel: '中级',
+    cardSvg: makeCardSvg,
+    cardBack: makeCardBack,
+    tables: [
+      { id: 1, status: 'waiting', canJoin: true, seats: [{name:'龙傲天', avatar:'👤', isHost:true, isAI:false}, null, null] },
+      { id: 2, status: 'playing', canJoin: false, seats: [{name:'小明', avatar:'👤', isHost:true, isAI:false}, {name:'小红', avatar:'👤', isHost:false, isAI:false}, {name:'智能狐', avatar:'🦊', isHost:false, isAI:true}] },
+      { id: 3, status: 'idle',    canJoin: true, seats: [null, null, null] },
+      { id: 4, status: 'waiting', canJoin: true, seats: [{name:'张三', avatar:'👤', isHost:true, isAI:false}, {name:'李四', avatar:'👤', isHost:false, isAI:false}, null] },
+    ],
+    myCards: [
+      {rank:'3', suit:'heart', selected:false},  {rank:'4', suit:'spade', selected:false},
+      {rank:'5', suit:'diamond', selected:false},{rank:'6', suit:'club', selected:false},
+      {rank:'7', suit:'heart', selected:false},  {rank:'8', suit:'spade', selected:false},
+      {rank:'9', suit:'diamond', selected:false},{rank:'10', suit:'club', selected:false},
+      {rank:'J', suit:'heart', selected:false},  {rank:'Q', suit:'spade', selected:false},
+      {rank:'K', suit:'diamond', selected:false},{rank:'A', suit:'club', selected:false},
+      {rank:'2', suit:'heart', selected:false},  {rank:'小', suit:'joker', selected:false},
+      {rank:'大', suit:'joker', selected:false}, {rank:'3', suit:'spade', selected:false},
+      {rank:'5', suit:'heart', selected:false},
+    ],
+    statusLabel(s) { return {idle:'空闲', waiting:'等待中', playing:'游戏中'}[s]; },
+    statusStyle(s) {
+      return {
+        idle:    'bg-slate-100 text-slate-600 border border-slate-300',
+        waiting: 'bg-amber-100 text-amber-700 border border-amber-300',
+        playing: 'bg-emerald-100 text-emerald-700 border border-emerald-300',
+      }[s];
+    },
+    enterTable(t) {
+      if (!t.canJoin) return;
+      this.page = 'table_waiting';
+    },
+  };
+}
+</script>
+
+</body>
+</html>
