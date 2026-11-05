@@ -193,30 +193,33 @@
       </div>
     </div>
 
-    <!-- 中央圆形金色桌面 + 出牌区 -->
-    <div class="mx-auto my-16 sm:my-20 flex flex-col items-center">
-      <div class="rounded-full shadow-2xl flex flex-col items-center justify-center"
-           style="width:min(80vw,400px); height:min(40vw,200px); background: radial-gradient(circle, #d4a048 0%, #a16a1c 100%); border: 4px solid #78350f;">
-        <!-- 底牌 (3 张, 游戏开始时显示) -->
-        <div class="flex gap-0.5 mb-2">
-          <span x-html="cardSvg({rank:'7', suit:'spade'}, 36)"></span>
-          <span x-html="cardSvg({rank:'J', suit:'heart'}, 36)"></span>
-          <span x-html="cardSvg({rank:'大', suit:'joker'}, 36)"></span>
-        </div>
-        <!-- 上家出的牌 -->
-        <div class="bg-black/30 px-3 py-2 rounded mb-1">
-          <div class="text-[10px] text-slate-200 text-center mb-1">沉思猫 (地主) 出:</div>
-          <div class="flex">
-            <span x-html="cardSvg({rank:'3', suit:'heart'}, 44)"></span>
-            <span x-html="cardSvg({rank:'3', suit:'spade'}, 44)"></span>
-          </div>
+    <!-- 中央大椭圆金色桌面 -->
+    <div class="mx-auto flex flex-col items-center justify-center relative"
+         style="margin-top: 4vh; width: min(96vw, 900px); height: min(55vh, 420px);
+                background: radial-gradient(ellipse at center, #e5b05c 0%, #b57a1e 60%, #8b5a0f 100%);
+                border-radius: 50%; border: 6px solid #5c3410;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 -10px 30px rgba(0,0,0,0.3);">
+      <!-- 底牌 (3 张, 斜放在桌面上方中央) -->
+      <div class="absolute flex gap-1" style="top: 10%;">
+        <span x-html="cardSvg({rank:'7', suit:'spade'}, 56)" style="transform: rotate(-8deg);"></span>
+        <span x-html="cardSvg({rank:'J', suit:'heart'}, 56)"></span>
+        <span x-html="cardSvg({rank:'大', suit:'joker'}, 56)" style="transform: rotate(8deg);"></span>
+      </div>
+      <div class="absolute text-[10px] text-amber-100 font-bold" style="top: 2%;">底牌</div>
+
+      <!-- 出牌区 (桌面中央大牌) -->
+      <div class="flex flex-col items-center mt-6">
+        <div class="text-[11px] text-amber-100 font-bold mb-1 bg-black/40 px-2 py-0.5 rounded">沉思猫 (地主) 出:</div>
+        <div class="flex">
+          <span x-html="cardSvg({rank:'3', suit:'heart'}, 72)"></span>
+          <span x-html="cardSvg({rank:'3', suit:'spade'}, 72)"></span>
         </div>
       </div>
-    </div>
 
-    <!-- 轮到出牌 提示 -->
-    <div class="text-center mb-2">
-      <span class="bg-amber-500/80 text-white text-xs font-bold px-3 py-1 rounded-full shadow">轮到你出牌</span>
+      <!-- 轮到出牌 提示 (桌面下方) -->
+      <div class="absolute" style="bottom: 8%;">
+        <span class="bg-amber-500/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow border border-amber-700 animate-pulse">⏱ 轮到你出牌</span>
+      </div>
     </div>
   </div>
 
