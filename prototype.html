@@ -7,10 +7,10 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
-  .card-svg { display: inline-block; vertical-align: middle; transition: transform 0.15s; cursor: pointer; user-select: none; margin: 0 -8px; }
-  .card-svg:hover { transform: translateY(-4px); z-index: 10; position: relative; }
-  .card-svg.selected { transform: translateY(-16px); z-index: 10; position: relative; filter: drop-shadow(0 4px 8px rgba(59,130,246,0.6)); }
-  .card-hand { display: flex; justify-content: center; padding-left: 12px; padding-right: 12px; flex-wrap: nowrap; }
+  .card-svg { display: inline-block; vertical-align: middle; transition: transform 0.15s; cursor: pointer; user-select: none; margin: 0 -22px; }
+  .card-svg:hover { transform: translateY(-8px); z-index: 10; position: relative; }
+  .card-svg.selected { transform: translateY(-24px); z-index: 10; position: relative; filter: drop-shadow(0 4px 10px rgba(59,130,246,0.7)); }
+  .card-hand { display: flex; justify-content: center; padding-left: 24px; padding-right: 24px; flex-wrap: nowrap; }
   .avatar { width: 48px; height: 48px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; }
   .avatar-sm { width: 32px; height: 32px; font-size: 1rem; }
   .avatar-lg { width: 64px; height: 64px; font-size: 2rem; }
@@ -215,8 +215,8 @@
     <div class="absolute z-10 left-1/2 flex flex-col items-center" style="top: 38%; transform: translateX(-50%);">
       <div class="text-[11px] text-amber-50 font-bold mb-1 bg-black/50 px-3 py-0.5 rounded-full">沉思猫 (地主) 出</div>
       <div class="flex">
-        <span x-html="cardSvg({rank:'3', suit:'heart'}, 72)"></span>
-        <span x-html="cardSvg({rank:'3', suit:'spade'}, 72)"></span>
+        <span x-html="cardSvg({rank:'3', suit:'heart'}, 88)"></span>
+        <span x-html="cardSvg({rank:'3', suit:'spade'}, 88)"></span>
       </div>
     </div>
 
@@ -243,10 +243,10 @@
       </div>
     </div>
 
-    <!-- 手牌 SVG -->
+    <!-- 手牌 SVG (放大到 98px) -->
     <div class="card-hand overflow-x-auto py-4">
       <template x-for="(c, idx) in myCards" :key="idx">
-        <span class="card-svg" :class="c.selected ? 'selected' : ''" @click="onCardClick(c)" x-html="cardSvg(c, 52)"></span>
+        <span class="card-svg" :class="c.selected ? 'selected' : ''" @click="onCardClick(c)" x-html="cardSvg(c, 98)"></span>
       </template>
     </div>
 
